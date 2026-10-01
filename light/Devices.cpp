@@ -9,6 +9,9 @@
 
 #include <android-base/logging.h>
 #include <filesystem>
+#include <light.sysprop.h>
+
+using namespace ::vendor::lineage::light;
 
 namespace aidl {
 namespace android {
@@ -44,6 +47,11 @@ static const std::string kBacklightDevices[] = {
 static std::vector<BacklightDevice> getBacklightDevices() {
     std::vector<BacklightDevice> devices;
 
+    if (LightProperties::BacklightDisable()) {
+        LOG(INFO) << "Backlight control is disabled per sysprop.";
+        return devices;
+    }
+
     for (const auto& device : kBacklightDevices) {
         BacklightDevice backlight(device);
         if (backlight.isOk()) {
@@ -76,6 +84,11 @@ static const std::string kLedBacklightDevices[] = {
 
 static std::vector<LedDevice> getBacklightLedDevices() {
     std::vector<LedDevice> devices;
+
+    if (LightProperties::BacklightDisable()) {
+        LOG(INFO) << "Backlight control is disabled per sysprop.";
+        return devices;
+    }
 
     for (const auto& device : kLedBacklightDevices) {
         LedDevice backlight(device);
@@ -128,6 +141,7 @@ static std::vector<LedDevice> getKeyboardLedDevices() {
 
 static const std::string kRgbLedDevices[][4] = {
         {"red", "green", "blue", "/sys/class/leds/rgb/rgb_blink"},
+        {"red:indicator", "green:indicator", "blue:indicator", ""},
         {"red:status", "green:status", "blue:status", ""},
 };
 
@@ -151,10 +165,7 @@ static std::vector<RgbLedDevice> getNotificationRgbLedDevices() {
 }
 
 static const std::string kNotificationLedDevices[] = {
-        "charging",
-        "left",
-        "white",
-        "white:status",
+        "charging", "left", "white", "white:indicator", "white:status",
 };
 
 static std::vector<LedDevice> getNotificationLedDevices() {
